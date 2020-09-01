@@ -5,9 +5,9 @@ import threading
 import circlify as circ
 from pytrends.request import TrendReq
 from pprint import pprint
-from PyQt5.QtGui import QPainter, QBrush, QPen, QColor, QFontMetrics
-from PyQt5.QtCore import Qt, QPoint, QPointF, QRect, QRectF, QRunnable, pyqtSlot, QThreadPool
-from PyQt5.QtWidgets import QWidget, QMainWindow, QLineEdit, QPushButton, QApplication, QVBoxLayout, QHBoxLayout, QSizePolicy, QLabel
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
 # https://pypi.org/project/circlify/
 # https://www.geeksforgeeks.org/pyqt5-create-circular-push-button/
@@ -39,6 +39,9 @@ pytrend = TrendReq()
 
 
 def removeKw(kw: str, item: str) -> str:
+    if " " in kw:
+        return item
+
     sp = item.split()
     if len(sp) < 1:
         return item
@@ -65,10 +68,13 @@ class SearchWorker(QRunnable):
     def search(self, kw: str):
         pytrend.build_payload([kw])
         datas = pytrend.related_queries()[kw][self.mode]
+        if datas is None:
+            return None
+
+        print(datas)
         datas["query"] = datas["query"].apply(lambda item: removeKw(kw, item))
 
         result = datas.sort_values(by=['value'])
-        print(result)
         return result
 
     def search_test(self, kw: str):
@@ -85,6 +91,13 @@ class SearchWorker(QRunnable):
     def run(self):
         # search
         relatedData = self.search(self.kw)
+
+        if relatedData is None:
+            msg = QMessageBox()
+            msg.setText("No results")
+            msg.exec_()
+            return
+
         queries = relatedData["query"]
         values = relatedData["value"]
 
@@ -174,7 +187,9 @@ class CirclePanelWidget(QWidget):
             self.drawCirclePen(painter, x, y, r)
 
         for i in range(0, len(self.names)):
-            c = self.circles[i]
+            if i+1 >= len(self.circles):
+                break
+            c = self.circles[i + 1]
 
             x = int(c['x'])
             y = int(c['y'])
