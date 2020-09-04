@@ -43,15 +43,21 @@ def removeKw(kw: str, item: str) -> str:
         return item
 
     sp = item.split()
-    if len(sp) < 1:
+    if len(sp) < 2:
         return item
 
+    start = 0
+    end = len(sp)
+
     if sp[0] == kw:
-        return " ".join(sp[1:])
-    elif sp[-1] == kw:
-        return " ".join(sp[:-1])
+        start = 1
+    if sp[-1] == kw:
+        end = end - 1
+
+    if start == end:
+        return sp[start]
     else:
-        return kw
+        return " ".join(sp[start:end])
 
 
 class SearchWorker(QRunnable):
